@@ -1,14 +1,22 @@
 [project]
-name = "ml-research-template"
+name = "control-redteam-rl"
 version = "0.1.0"
-description = "Template for ML research experiments"
+description = "RL attack policies for AI control evaluations"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
-    "torch>=2.0.0",
     "pytest>=8.0.0",
     "wandb>=0.18.0",
     "research-scaffold",
+    "tinker>=0.12.0",
+    "tinker-cookbook",
+    "datasets>=4.4.1",
+    "openai>=1.0.0",
+    "docker>=7.0.0",
+    "transformers>=4.40.0",
+    "pyyaml>=6.0.3",
+    "beartype>=0.22.9",
+    "sky>=0.0.201",
 ]
 
 [build-system]
@@ -22,6 +30,20 @@ packages = ["lib"]
 testpaths = ["test"]
 python_files = ["test_*.py"]
 
-[tool.uv.sources]
-research-scaffold = { git = "https://github.com/jr-brown/research-scaffold.git" }
+[tool.uv]
+override-dependencies = [
+    "torch==2.9.1+cpu ; sys_platform == 'linux'",
+    "torch>=2.9.0 ; sys_platform == 'darwin'",
+]
 
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
+]
+research-scaffold = { git = "https://github.com/jr-brown/research-scaffold.git" }
+tinker-cookbook = { git = "https://github.com/thinking-machines-lab/tinker-cookbook.git" }

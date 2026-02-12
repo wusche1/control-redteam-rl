@@ -1,0 +1,11 @@
+common_root: configs/base.yaml
+experiments:
+  - config:
+      name: debug_eval
+      function_name: eval_only
+      function_kwargs:
+        batch_size: 4
+        group_size: 1
+        max_tokens: 4096
+        max_test_samples: 4
+        eval_log_completions: -1
