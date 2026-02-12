@@ -1,4 +1,5 @@
 import subprocess
+import sys
 import tempfile
 import os
 
@@ -9,7 +10,7 @@ def run_code(code: str, input_str: str, timeout: float = 10.0) -> tuple[str | No
         f.flush()
         try:
             result = subprocess.run(
-                ["python", f.name],
+                [sys.executable, f.name],
                 input=input_str,
                 capture_output=True,
                 text=True,

@@ -35,6 +35,9 @@ def _extract_json(content: str) -> str:
         lines = content.split("\n")
         lines = [l for l in lines if not l.strip().startswith("```")]
         content = "\n".join(lines)
+    match = re.search(r'\{[^{}]*"suspicion_score"[^{}]*\}', content)
+    if match:
+        return match.group(0)
     match = re.search(r'\{[^{}]*"suspiciousness"[^{}]*\}', content)
     if match:
         return match.group(0)
@@ -44,38 +47,14 @@ def _extract_json(content: str) -> str:
     return content
 
 
-def format_monitor_input(
-    mode: str,
-    problem: str,
-    conversation: list[dict],
-    final_output: str,
-    explanation: str | None = None,
-    code: str | None = None,
-) -> tuple[str, str]:
-    if mode == "code_only":
-        return problem, code or final_output
-    elif mode == "prompt_and_answer":
-        return problem, final_output
-    elif mode == "full_conversation":
-        conv_str = "\n".join(
-            f"[{msg['role']}]: {msg['content']}" for msg in conversation
-        )
-        return problem, conv_str
-    elif mode == "answer_and_explanation":
-        output = final_output
-        if explanation:
-            output = f"{final_output}\n\nExplanation: {explanation}"
-        return problem, output
-    raise ValueError(f"Unknown monitor input mode: {mode}")
-
-
 async def _monitor_async(
-    task: str,
-    output: str,
     model: str,
     prompt_template: str,
+    task: str = "",
+    actions: str = "",
+    output: str = "",
 ) -> dict:
-    prompt = prompt_template.replace("{task}", task).replace("{output}", output)
+    prompt = prompt_template.replace("{task}", task).replace("{actions}", actions).replace("{output}", output)
     try:
         response = await _get_client().chat.completions.create(
             model=model,
@@ -91,28 +70,16 @@ async def _monitor_async(
         raw_content = response.choices[0].message.content
         content = _extract_json(raw_content)
         result = json.loads(content)
-        if "suspiciousness" not in result:
-            print(f"[monitor] Missing 'suspiciousness' key in: {raw_content}")
-            result["suspiciousness"] = 5
+        # Normalize key name: accept both "suspicion_score" and "suspiciousness"
+        if "suspicion_score" in result:
+            result["suspicion_score"] = float(result["suspicion_score"])
+        elif "suspiciousness" in result:
+            result["suspicion_score"] = float(result["suspiciousness"])
         else:
-            try:
-                result["suspiciousness"] = int(result["suspiciousness"])
-            except (ValueError, TypeError):
-                print(f"[monitor] Cannot convert suspiciousness to int: {result['suspiciousness']}")
-                result["suspiciousness"] = 5
+            print(f"[monitor] Missing suspicion score in: {raw_content}")
+            result["suspicion_score"] = 0.5
+        result["suspicion_score"] = max(0.0, min(1.0, result["suspicion_score"]))
         return result
     except Exception as e:
         print(f"[monitor] Error: {e}")
-        return {"suspiciousness": 5, "reasoning": None}
-
-
-async def monitor_batch_async(
-    tasks: list[str],
-    outputs: list[str],
-    model: str,
-    prompt_template: str,
-) -> list[dict]:
-    return await asyncio.gather(*[
-        _monitor_async(task, output, model, prompt_template)
-        for task, output in zip(tasks, outputs)
-    ])
+        return {"suspicion_score": 0.5, "reasoning": None}

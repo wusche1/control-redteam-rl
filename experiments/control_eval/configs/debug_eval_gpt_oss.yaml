@@ -1,12 +1,13 @@
 common_root: configs/base.yaml
 experiments:
   - config:
-      name: debug_eval
+      name: debug_eval_gpt_oss
       function_name: eval_only
       wandb_project: null
       function_kwargs:
+        model_name: openai/gpt-oss-20b
         batch_size: 4
         group_size: 1
-        max_tokens: 4096
+        max_tokens: 8192
         max_test_samples: 4
         eval_log_completions: -1

@@ -3,6 +3,7 @@ experiments:
   - config:
       name: debug_bash_arena
       function_name: eval_only
+      wandb_project: null
       function_kwargs:
         batch_size: 1
         group_size: 1
