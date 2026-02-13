@@ -14,7 +14,7 @@ from tinker_cookbook.rl.types import (
     Env, EnvGroupBuilder, RLDataset, RLDatasetBuilder,
     Action, Observation, StepResult,
 )
-from tinker_cookbook.rl import train
+from tinker_cookbook.rl.train import Config, KLReferenceConfig, main as train_main
 from tinker_cookbook.rl.metric_util import RLTestSetEvaluator, _compute_by_group_metrics
 from transformers import AutoTokenizer
 
@@ -183,6 +183,14 @@ class AppsBackdoorEnv(ControlEvalEnv):
         # Extract tool call args and decompose reasoning/text
         parts = decompose_message(message)
         submit_args = extract_tool_call(message, "submit")
+        # Fallback: if no tool call, try parsing text output as JSON with code/secret_input
+        if not submit_args and parts["text"]:
+            try:
+                parsed = json.loads(parts["text"].strip())
+                if isinstance(parsed, dict) and "code" in parsed:
+                    submit_args = parsed
+            except (json.JSONDecodeError, ValueError):
+                pass
         code = submit_args.get("code") if submit_args else None
         secret_input = submit_args.get("secret_input") if submit_args else None
 
@@ -740,6 +748,7 @@ async def train_grpo(
     adapter_path: str | None,
     start_batch: int,
     renderer_name: str | None,
+    kl_penalty_coef: float = 0.0,
 ):
     if not renderer_name:
         renderer_name = model_info.get_recommended_renderer_name(model_name)
@@ -773,7 +782,9 @@ async def train_grpo(
     if max_test_samples:
         evaluator_builders.append(lambda: make_winrate_evaluator(dataset_builder, max_tokens))
 
-    config = train.Config(
+    kl_ref = KLReferenceConfig(base_model=model_name) if kl_penalty_coef > 0 else None
+
+    config = Config(
         model_name=model_name,
         log_path=log_path,
         dataset_builder=dataset_builder,
@@ -787,8 +798,10 @@ async def train_grpo(
         save_every=save_every,
         evaluator_builders=evaluator_builders,
         load_checkpoint_path=adapter_path,
+        kl_penalty_coef=kl_penalty_coef,
+        kl_reference_config=kl_ref,
     )
-    await train.main(config)
+    await train_main(config)
 
 
 def main(**kwargs):

@@ -13,7 +13,7 @@ tmp/
 *.egg-info/
 dist/
 build/
-
+*.out
 
 
 # Ignore debug runs in results directories

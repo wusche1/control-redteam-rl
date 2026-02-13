@@ -1,0 +1,13 @@
+common_root: configs/base.yaml
+experiments:
+  - config:
+      name: train_small
+      function_kwargs:
+        batch_size: 2
+        group_size: 16
+        max_tokens: 2048
+        max_train_samples: 400
+        max_test_samples: 10
+        eval_every: 50
+        save_every: 100
+        kl_penalty_coef: 0.03

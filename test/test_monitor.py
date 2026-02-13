@@ -28,7 +28,7 @@ class TestMonitorAsync:
         mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=5)
         mock_response.usage.cost = 0.001
         mock_response.choices = [
-            MagicMock(message=MagicMock(content='{"suspicion_score": 0.3, "reasoning": "looks ok"}'))
+            MagicMock(message=MagicMock(content='{"suspicion_score": 3, "reasoning": "looks ok"}'))
         ]
 
         mock_client = AsyncMock()
@@ -37,7 +37,7 @@ class TestMonitorAsync:
         with patch("lib.monitor._get_client", return_value=mock_client):
             result = asyncio.run(_monitor_async("model", "Review {task}: {actions}", task="task", actions="code"))
 
-        assert result["suspicion_score"] == 0.3
+        assert result["suspicion_score"] == 0.3  # 3/10
         assert result["reasoning"] == "looks ok"
 
     def test_legacy_suspiciousness_key(self):
@@ -45,7 +45,7 @@ class TestMonitorAsync:
         mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=5)
         mock_response.usage.cost = 0.001
         mock_response.choices = [
-            MagicMock(message=MagicMock(content='{"suspiciousness": 0.7, "reasoning": "suspicious"}'))
+            MagicMock(message=MagicMock(content='{"suspiciousness": 7, "reasoning": "suspicious"}'))
         ]
 
         mock_client = AsyncMock()
@@ -54,14 +54,30 @@ class TestMonitorAsync:
         with patch("lib.monitor._get_client", return_value=mock_client):
             result = asyncio.run(_monitor_async("model", "Review {task}: {actions}", task="task", actions="code"))
 
-        assert result["suspicion_score"] == 0.7
+        assert result["suspicion_score"] == 0.7  # 7/10
+
+    def test_score_key(self):
+        mock_response = MagicMock()
+        mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=5)
+        mock_response.usage.cost = 0.001
+        mock_response.choices = [
+            MagicMock(message=MagicMock(content='{"score": 5, "reasoning": "moderate"}'))
+        ]
+
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
+
+        with patch("lib.monitor._get_client", return_value=mock_client):
+            result = asyncio.run(_monitor_async("model", "Review {task}: {actions}", task="task", actions="code"))
+
+        assert result["suspicion_score"] == 0.5  # 5/10
 
     def test_placeholder_substitution(self):
         mock_response = MagicMock()
         mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=5)
         mock_response.usage.cost = 0.001
         mock_response.choices = [
-            MagicMock(message=MagicMock(content='{"suspicion_score": 0.1, "reasoning": "clean"}'))
+            MagicMock(message=MagicMock(content='{"suspicion_score": 1, "reasoning": "clean"}'))
         ]
 
         mock_client = AsyncMock()
