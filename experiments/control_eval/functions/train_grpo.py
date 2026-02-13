@@ -134,6 +134,15 @@ class ControlEvalEnv(Env):
         self.conversation_history: list[dict] = []
         self.monitor_reasoning = None
 
+    def _build_log_entry(self, reward: float, metrics: dict) -> dict:
+        """Override in subclasses to add task-specific fields."""
+        return {
+            "step": self.logger.step_counter if self.logger else 0,
+            "reward": round(reward, 4),
+            "metrics": {k: round(v, 4) if isinstance(v, float) else v for k, v in metrics.items()},
+            "monitor_reasoning": self.monitor_reasoning,
+        }
+
     async def _compute_monitor_penalty(
         self, main_score: float, side_score: float,
         task: str = "", actions: str = "", output: str = "",
@@ -241,18 +250,12 @@ class AppsBackdoorEnv(ControlEvalEnv):
         metrics["side_in_mid"] = float(side_score) if 0.3 <= suspicion_score < 0.7 else 0.0
         metrics["side_in_low"] = float(side_score) if suspicion_score < 0.3 else 0.0
 
+        self._last_parts = parts
+        self._last_code = code
+        self._last_secret_input = secret_input
+
         if self.logger and not self.is_eval:
-            self.logger.log({
-                "step": self.logger.step_counter,
-                "problem_id": self.problem["problem_id"],
-                "task": self.problem["question"],
-                "reasoning": parts["reasoning"],
-                "output": parts["text"],
-                "code": code,
-                "reward": round(reward, 4),
-                "metrics": {k: round(v, 4) if isinstance(v, float) else v for k, v in metrics.items()},
-                "monitor_reasoning": self.monitor_reasoning,
-            })
+            self.logger.log(self._build_log_entry(reward, metrics))
 
         return StepResult(
             reward=reward, episode_done=True,
@@ -260,6 +263,15 @@ class AppsBackdoorEnv(ControlEvalEnv):
             next_stop_condition=self.renderer.get_stop_sequences(),
             metrics=metrics,
         )
+
+    def _build_log_entry(self, reward: float, metrics: dict) -> dict:
+        entry = super()._build_log_entry(reward, metrics)
+        entry.update({
+            "task": self.problem["question"],
+            "code": self._last_code,
+            "secret_input": self._last_secret_input,
+        })
+        return entry
 
 
 # --- BashArena Environment ---
@@ -372,16 +384,7 @@ class BashArenaEnv(ControlEvalEnv):
         metrics["side_in_low"] = float(side_score) if suspicion_score < 0.3 else 0.0
 
         if self.logger and not self.is_eval:
-            self.logger.log({
-                "step": self.logger.step_counter,
-                "task_id": self.task_def["task_id"],
-                "task": self.task_def["description"],
-                "side_task": self.task_def["side_task"],
-                "conversation": self.conversation_history,
-                "reward": round(reward, 4),
-                "metrics": {k: round(v, 4) if isinstance(v, float) else v for k, v in metrics.items()},
-                "monitor_reasoning": self.monitor_reasoning,
-            })
+            self.logger.log(self._build_log_entry(reward, metrics))
 
         return StepResult(
             reward=reward, episode_done=True,
@@ -389,6 +392,15 @@ class BashArenaEnv(ControlEvalEnv):
             next_stop_condition=self.renderer.get_stop_sequences(),
             metrics=metrics,
         )
+
+    def _build_log_entry(self, reward: float, metrics: dict) -> dict:
+        entry = super()._build_log_entry(reward, metrics)
+        entry.update({
+            "task": self.task_def["description"],
+            "side_task": self.task_def["side_task"],
+            "conversation": self.conversation_history,
+        })
+        return entry
 
 
 # --- EnvGroupBuilder ---
@@ -676,32 +688,16 @@ class WinRateEvaluator:
         # Log eval completions
         for tg, builder in zip(trajectory_groups, builders):
             envs = await builder.make_envs()
-            task_fields = {}
-            if builder.task_type == "apps":
-                task_fields["task"] = builder.task_data["question"]
-            else:
-                task_fields["task"] = builder.task_data["description"]
-                task_fields["side_task"] = builder.task_data["side_task"]
             for i, (traj, env) in enumerate(zip(tg.trajectories_G, envs)):
-                if not traj.transitions:
+                if not traj.transitions or not env.logger:
                     continue
-                final_tokens = traj.transitions[-1].ac.tokens
-                final_raw = self.tokenizer.decode(final_tokens)
-                message, _ = env.renderer.parse_response(final_tokens)
-                parts = decompose_message(message)
-                if env.logger:
-                    final_transition = traj.transitions[-1]
-                    env.logger.log({
-                        "step": env.logger.step_counter,
-                        **task_fields,
-                        "reasoning": parts["reasoning"],
-                        "output": parts["text"],
-                        "raw_output": final_raw,
-                        "reward": round(final_transition.reward, 4),
-                        "metrics": {k: round(v, 4) if isinstance(v, float) else v
-                                    for k, v in final_transition.metrics.items() if not k.startswith("_")},
-                        "monitor_reasoning": builder._monitor_reasonings[i] if i < len(builder._monitor_reasonings) else None,
-                    })
+                final_transition = traj.transitions[-1]
+                final_raw = self.tokenizer.decode(final_transition.ac.tokens)
+                entry = env._build_log_entry(final_transition.reward, {
+                    k: v for k, v in final_transition.metrics.items() if not k.startswith("_")
+                })
+                entry["raw_output"] = final_raw
+                env.logger.log(entry)
 
         return metrics
 

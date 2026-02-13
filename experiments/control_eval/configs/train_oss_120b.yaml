@@ -1,0 +1,7 @@
+common_root: configs/base.yaml
+experiments:
+  - config:
+      name: train_oss_120b
+      function_kwargs:
+        model_name: openai/gpt-oss-120b
+        max_tokens: 4096
