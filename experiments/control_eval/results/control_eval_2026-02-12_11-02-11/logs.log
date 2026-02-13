@@ -1,0 +1,22 @@
+tinker_cookbook.utils.ml_log:477 [INFO] Logging to: results/control_eval_2026-02-12_11-02-11
+tinker_cookbook.checkpoint_utils:21 [INFO] No checkpoints found at results/control_eval_2026-02-12_11-02-11/checkpoints.jsonl
+tinker_cookbook.checkpoint_utils:52 [INFO] No checkpoints found with key state_path in results/control_eval_2026-02-12_11-02-11
+tinker.lib.public_interfaces.service_client:67 [INFO] ServiceClient initialized for session 0707341a-bb73-5068-9208-69e93ba37a4e
+tinker.lib.public_interfaces.service_client:151 [INFO] TrainingClient initialized for model 0707341a-bb73-5068-9208-69e93ba37a4e:train:0
+tinker_cookbook.rl.train:1173 [INFO] Will train on 250 batches
+tinker_cookbook.utils.misc_utils:20 [INFO] Starting save_checkpoint
+tinker_cookbook.utils.misc_utils:23 [INFO] save_checkpoint took 1.30 seconds
+tinker_cookbook.utils.misc_utils:20 [INFO] Starting run_evals
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.386941 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.381886 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.402669 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.391311 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.482528 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.442760 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.482835 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.395360 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.435363 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.462988 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.423256 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.422210 seconds
+openai._base_client:1693 [INFO] Retrying request to /chat/completions in 0.490144 seconds

@@ -1,0 +1,9 @@
+tinker_cookbook.utils.ml_log:477 [INFO] Logging to: results/control_eval_train_small_2026-02-12_14-56-59
+tinker_cookbook.checkpoint_utils:21 [INFO] No checkpoints found at results/control_eval_train_small_2026-02-12_14-56-59/checkpoints.jsonl
+tinker_cookbook.checkpoint_utils:52 [INFO] No checkpoints found with key state_path in results/control_eval_train_small_2026-02-12_14-56-59
+tinker.lib.public_interfaces.service_client:67 [INFO] ServiceClient initialized for session 0f700b02-4f83-54f3-9273-a0da91a99472
+tinker.lib.public_interfaces.service_client:151 [INFO] TrainingClient initialized for model 0f700b02-4f83-54f3-9273-a0da91a99472:train:0
+tinker_cookbook.rl.train:1173 [INFO] Will train on 200 batches
+tinker_cookbook.utils.misc_utils:20 [INFO] Starting save_checkpoint
+tinker_cookbook.utils.misc_utils:23 [INFO] save_checkpoint took 2.55 seconds
+tinker_cookbook.utils.misc_utils:20 [INFO] Starting run_evals

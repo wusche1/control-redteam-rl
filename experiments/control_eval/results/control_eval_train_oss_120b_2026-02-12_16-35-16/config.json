@@ -1,0 +1,31 @@
+{
+  "learning_rate": 4e-05,
+  "dataset_builder": {},
+  "model_name": "openai/gpt-oss-120b",
+  "max_tokens": 4096,
+  "temperature": 1.0,
+  "compute_post_kl": false,
+  "evaluator_builders": [
+    {}
+  ],
+  "lora_rank": 32,
+  "kl_penalty_coef": 0.0,
+  "kl_discount_factor": 0.0,
+  "kl_reference_config": null,
+  "loss_fn": "importance_sampling",
+  "loss_fn_config": null,
+  "num_substeps": 1,
+  "wandb_project": "control_eval",
+  "wandb_name": "control_eval_train_oss_120b_2026-02-12_16-35-16",
+  "log_path": "results/control_eval_train_oss_120b_2026-02-12_16-35-16",
+  "base_url": null,
+  "enable_trace": false,
+  "remove_constant_reward_groups": false,
+  "eval_every": 20,
+  "save_every": 100,
+  "ttl_seconds": 604800,
+  "load_checkpoint_path": null,
+  "async_config": null,
+  "stream_minibatch_config": null,
+  "num_groups_to_log": 0
+}

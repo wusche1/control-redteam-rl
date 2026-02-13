@@ -1,0 +1,25 @@
+### repo: /Users/julianschulz/Projects/AI_safety/control-redteam-rl @ b5302abc16ce2591946e26c890a1f736c258cd6e
+modules: tinker_cookbook
+-- repo-wide (vs HEAD, staged+unstaged) --
+diff --git a/.envrc b/.envrc
+index 7a8a1c6..831bc63 100644
+--- a/.envrc
++++ b/.envrc
+@@ -1,2 +1,4 @@
+ dotenv
++export VIRTUAL_ENV="$PWD/.venv"
++export PATH="$VIRTUAL_ENV/bin:$PATH"
+ 
+diff --git a/.gitignore b/.gitignore
+index c705caa..78948e7 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -13,7 +13,7 @@ tmp/
+ *.egg-info/
+ dist/
+ build/
+-
++*.out
+ 
+ 
+ # Ignore debug runs in results directories

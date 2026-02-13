@@ -1,0 +1,69 @@
+### repo: /Users/julianschulz/Projects/AI_safety/control-redteam-rl @ b5302abc16ce2591946e26c890a1f736c258cd6e
+modules: tinker_cookbook
+-- repo-wide (vs HEAD, staged+unstaged) --
+diff --git a/.envrc b/.envrc
+index 7a8a1c6..831bc63 100644
+--- a/.envrc
++++ b/.envrc
+@@ -1,2 +1,4 @@
+ dotenv
++export VIRTUAL_ENV="$PWD/.venv"
++export PATH="$VIRTUAL_ENV/bin:$PATH"
+ 
+diff --git a/.gitignore b/.gitignore
+index c705caa..78948e7 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -13,7 +13,7 @@ tmp/
+ *.egg-info/
+ dist/
+ build/
+-
++*.out
+ 
+ 
+ # Ignore debug runs in results directories
+diff --git a/experiments/control_eval/functions/train_grpo.py b/experiments/control_eval/functions/train_grpo.py
+index 5fecf8b..94d5002 100644
+--- a/experiments/control_eval/functions/train_grpo.py
++++ b/experiments/control_eval/functions/train_grpo.py
+@@ -14,7 +14,7 @@ from tinker_cookbook.rl.types import (
+     Env, EnvGroupBuilder, RLDataset, RLDatasetBuilder,
+     Action, Observation, StepResult,
+ )
+-from tinker_cookbook.rl import train
++from tinker_cookbook.rl.train import Config, KLReferenceConfig, main as train_main
+ from tinker_cookbook.rl.metric_util import RLTestSetEvaluator, _compute_by_group_metrics
+ from transformers import AutoTokenizer
+ 
+@@ -740,6 +740,7 @@ async def train_grpo(
+     adapter_path: str | None,
+     start_batch: int,
+     renderer_name: str | None,
++    kl_penalty_coef: float = 0.0,
+ ):
+     if not renderer_name:
+         renderer_name = model_info.get_recommended_renderer_name(model_name)
+@@ -773,7 +774,9 @@ async def train_grpo(
+     if max_test_samples:
+         evaluator_builders.append(lambda: make_winrate_evaluator(dataset_builder, max_tokens))
+ 
+-    config = train.Config(
++    kl_ref = KLReferenceConfig(base_model=model_name) if kl_penalty_coef > 0 else None
++
++    config = Config(
+         model_name=model_name,
+         log_path=log_path,
+         dataset_builder=dataset_builder,
+@@ -787,8 +790,10 @@ async def train_grpo(
+         save_every=save_every,
+         evaluator_builders=evaluator_builders,
+         load_checkpoint_path=adapter_path,
++        kl_penalty_coef=kl_penalty_coef,
++        kl_reference_config=kl_ref,
+     )
+-    await train.main(config)
++    await train_main(config)
+ 
+ 
+ def main(**kwargs):
